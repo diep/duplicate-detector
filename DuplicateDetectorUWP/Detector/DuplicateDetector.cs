@@ -30,27 +30,27 @@ namespace DuplicateDetectorUWP.Detector
 
         public async Task<ObservableCollection<GroupRecord>> Execute()
         {
-            GetAllFiles(folderPaths);
+            var f = (await GetAllFiles(folderPaths))[0];
+
             return null;
         }
 
-        private async void GetAllFiles(ObservableCollection<StorageFolder> folderPaths)
+        private async Task<ObservableCollection<string>> GetAllFiles(ObservableCollection<StorageFolder> folderPaths)
         {
-            ObservableCollection<StorageFolder> files = new ObservableCollection<StorageFolder>();
+            ObservableCollection<string> files = new ObservableCollection<string>();
             foreach (var f in folderPaths)
             {
-                StorageFile folders = await StorageFile.GetFileFromPathAsync(f);
-                /*var items = await folders.GetItemsAsync();
+                var items = await f.GetItemsAsync();
                 
                 foreach (var item in items)
                 {
                     if (item.GetType() == typeof(StorageFile))
                         files.Add(item.Path.ToString());
                     else
-                        files.Concat<string>(await GetAllFiles(new List<string>() { item.Path.ToString() }));
-                }*/
+                        files.Concat<string>(await GetAllFiles(new ObservableCollection<StorageFolder>() { (StorageFolder)item }));
+                }
             }
-            //return files;
+            return files;
         }
 
         public void AddFolders(StorageFolder path)
