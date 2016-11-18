@@ -2,6 +2,7 @@
 using DuplicateDirectorUWP;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 
@@ -13,7 +14,7 @@ namespace DuplicateDetectorUWP.Detector
         public string Name { get; set; }
         public string Comment { get; set; }
         public long Size { get; set; }
-        public List<Record> records { get; set; }
+        public ObservableCollection<Record> records { get; set; }
 
         // Constructor
         public GroupRecord()
@@ -21,7 +22,7 @@ namespace DuplicateDetectorUWP.Detector
             this.Id = Singleton.CreateGuid();
             this.Name = string.Empty;
             this.Comment = string.Empty;
-            this.records = new List<Record>();
+            this.records = new ObservableCollection<Record>();
             this.Size = 0;
         }
         
