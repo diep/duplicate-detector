@@ -16,7 +16,7 @@ namespace DuplicateDetectorUWP.Detector
         public List<Record> records { get; set; }
 
         // Constructor
-        GroupRecord()
+        public GroupRecord()
         {
             this.Id = Singleton.CreateGuid();
             this.Name = string.Empty;

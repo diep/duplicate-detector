@@ -2,9 +2,11 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Windows.Storage;
 
 namespace DuplicateDetectorUWP.Detector
 {
@@ -19,7 +21,7 @@ namespace DuplicateDetectorUWP.Detector
         public EnumerableCryptographType CryptographyType { get; set; }
         public EnumerableCompareType CompareBy { get; set; }
 
-        DuplicateDetector()
+        public DuplicateDetector()
         {
             this.folderPaths = new List<string>();
             this.CryptographyType = EnumerableCryptographType.Md5;
@@ -28,12 +30,19 @@ namespace DuplicateDetectorUWP.Detector
 
         public List<GroupRecord> Execute()
         {
-            throw new System.NotImplementedException();
+            GetAllFiles(folderPaths);
+            return null;
         }
 
         private List<string> GetAllFiles(List<string> folderPaths)
         {
-            throw new System.NotImplementedException();
+            List<string> files = new List<string>();
+            foreach (var f in folderPaths)
+            {
+                var items = Directory.GetFiles(f, "*.*", SearchOption.AllDirectories).ToList();
+                files.Concat<string>(items);
+            }
+            return files;
         }
 
         public void AddFolders(string path)
