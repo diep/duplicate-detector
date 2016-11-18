@@ -1,6 +1,7 @@
 ﻿using DuplicateDetectorUWP.Detector.Enumerable;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -26,6 +27,11 @@ namespace DuplicateDetectorUWP.Detector
         }
 
         public List<GroupRecord> Execute()
+        {
+            throw new System.NotImplementedException();
+        }
+
+        private List<string> GetAllFiles(List<string> folderPaths)
         {
             throw new System.NotImplementedException();
         }

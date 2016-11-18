@@ -10,12 +10,10 @@ namespace DuplicateDetectorUWP.Detector
     public class GroupRecord
     {
         public string Id { get; private set; }
-
         public string Name { get; set; }
-
         public string Comment { get; set; }
-
-        private List<Record> records;
+        public long Size { get; set; }
+        public List<Record> records { get; set; }
 
         // Constructor
         GroupRecord()
@@ -24,8 +22,9 @@ namespace DuplicateDetectorUWP.Detector
             this.Name = string.Empty;
             this.Comment = string.Empty;
             this.records = new List<Record>();
+            this.Size = 0;
         }
-
+        
         public void AddRecord(Record record)
         {
             if (record == null)
@@ -44,11 +43,6 @@ namespace DuplicateDetectorUWP.Detector
             this.records.RemoveAt(index);
         }
         
-        public List<Record> GetRecords()
-        {
-            return this.records;
-        }
-
         public void ClearRecords()
         {
             if(this.records == null)
