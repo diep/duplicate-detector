@@ -11,7 +11,7 @@ namespace DuplicateDetectorUWP.Hash
 {
     public class Md5 : AbstractHash
     {
-        protected override string Create(string input)
+        public override string Create(string input)
         {
             return Create(input);
         }
@@ -29,47 +29,23 @@ namespace DuplicateDetectorUWP.Hash
                     BinaryStringEncoding.Utf8
                 );
 
-            HashAlgorithmProvider objAlgProv = HashAlgorithmProvider.OpenAlgorithm(strAlgName);
-            IBuffer buffHash = objAlgProv.HashData(buffUtf8Msg);
-            if (buffHash.Length != objAlgProv.HashLength)
-            {
-                this.ErrorCode = EnumerableErrorCode.CannotHash;
-                throw new Exception("There was an error creating the hash");
-            }
-
-            string hex = CryptographicBuffer.EncodeToHexString(buffHash);
-            if(hex == null || hex.Equals(string.Empty))
-            {
-                this.ErrorCode = EnumerableErrorCode.CannotHash;
-            }
-            this.ErrorCode = EnumerableErrorCode.Created;
-            this.IsCompleted = true;
-            return hex;
+            return Create(buffUtf8Msg, strAlgName);
         }
 
-        protected override string Create(byte[] input)
+        public override string Create(byte[] input)
         {
             return Create(input);
         }
 
         public string Create(byte[] input, string comment = null)
         {
+            if (input == null || input.Length == 0)
+            {
+                this.ErrorCode = EnumerableErrorCode.InputEmpty;
+            }
             string strAlgName = HashAlgorithmNames.Md5;
             IBuffer buffUtf8Msg = CryptographicBuffer.CreateFromByteArray(input);
-
-            HashAlgorithmProvider objAlgProv = HashAlgorithmProvider.OpenAlgorithm(strAlgName);
-            //strAlgNameUsed = objAlgProv.AlgorithmName;
-
-            IBuffer buffHash = objAlgProv.HashData(buffUtf8Msg);
-
-            if (buffHash.Length != objAlgProv.HashLength)
-            {
-                throw new Exception("There was an error creating the hash");
-            }
-
-            string hex = CryptographicBuffer.EncodeToHexString(buffHash);
-
-            return hex;
+            return Create(buffUtf8Msg, strAlgName);
         }
     }
 }

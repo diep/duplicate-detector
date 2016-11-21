@@ -1,22 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 
 namespace DuplicateDetectorUWP.Detector
 {
-    public class Record
+    public class Record : INotifyPropertyChanged
     {
-
         public Record()
         {
-            this.Id = string.Empty;
-            this.Name = string.Empty;
-            this.Path = string.Empty;
-            this.Size = 0;
-            this.Hash = string.Empty;
-            this.DateCreated = new DateTime();
-            this.DateModified = new DateTime();
+            this._id = string.Empty;
+            this._name = string.Empty;
+            this._path = string.Empty;
+            this._size = 0;
+            this._hash = string.Empty;
+            this._dateCreated = new DateTime();
+            this._dateModified = new DateTime();
+            this._isOrigin = false;
         }
 
         public Record(
@@ -28,28 +29,166 @@ namespace DuplicateDetectorUWP.Detector
             string path, 
             DateTime dateCreated)
         {
-            this.Id = id;
-            this.Name = name;
-            this.Path = path;
-            this.Size = size;
-            this.Hash = hash;
-            this.DateCreated = dateCreated;
-            this.DateModified = dateModified;
+            this._id = id;
+            this._name = name;
+            this._path = path;
+            this._size = size;
+            this._hash = hash;
+            this._dateCreated = dateCreated;
+            this._dateModified = dateModified;
+            this._isOrigin = false;
         }
-        
 
-        public string Id { get; set; }
+        private string _id;
 
-        public string Name { get; set; }
+        private string _name;
 
-        public long Size { get; set; }
+        private long _size;
 
-        public DateTime DateModified { get; set; }
+        private DateTime _dateModified;
 
-        public string Hash { get; set; }
+        private string _hash;
 
-        public string Path { get; set; }
+        private string _path;
 
-        public DateTime DateCreated { get; set; }
+        private DateTime _dateCreated;
+
+        private Boolean _isOrigin;
+
+
+        public string Id
+        {
+            get
+            {
+                return _id;
+            }
+            internal set
+            {
+                if (value != this._id)
+                {
+                    this._id = value;
+                    NotifyPropertyChanged("_id");
+                }
+            }
+        }
+
+        public string Name
+        {
+            get
+            {
+                return _name;
+            }
+            set
+            {
+                if (value != this._name)
+                {
+                    this._name = value;
+                    NotifyPropertyChanged("_name");
+                }
+            }
+        }
+
+        public long Size
+        {
+            get
+            {
+                return _size;
+            }
+            set
+            {
+                if (value != this._size)
+                {
+                    this._size = value;
+                    NotifyPropertyChanged("_size");
+                }
+            }
+        }
+
+        public DateTime DateModified
+        {
+            get
+            {
+                return _dateModified;
+            }
+            set
+            {
+                if (value != this._dateModified)
+                {
+                    this._dateModified = value;
+                    NotifyPropertyChanged("_dateModified");
+                }
+            }
+        }
+
+        public string Hash
+        {
+            get
+            {
+                return _hash;
+            }
+            set
+            {
+                if (value != this._hash)
+                {
+                    this._hash = value;
+                    NotifyPropertyChanged("_hash");
+                }
+            }
+        }
+
+        public string Path
+        {
+            get
+            {
+                return _path;
+            }
+            set
+            {
+                if (value != this._path)
+                {
+                    this._path = value;
+                    NotifyPropertyChanged("_path");
+                }
+            }
+        }
+
+        public DateTime DateCreated
+        {
+            get
+            {
+                return _dateCreated;
+            }
+            set
+            {
+                if (value != this._dateCreated)
+                {
+                    this._dateCreated = value;
+                    NotifyPropertyChanged("_dateCreated");
+                }
+            }
+        }
+
+        public Boolean IsOrigin
+        {
+            get
+            {
+                return _isOrigin;
+            }
+            set
+            {
+                if (value != this._isOrigin)
+                {
+                    this._isOrigin = value;
+                    NotifyPropertyChanged("_isOrigin");
+                }
+            }
+        }
+
+
+        public event PropertyChangedEventHandler PropertyChanged;
+        private void NotifyPropertyChanged(String propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
     }
 }
