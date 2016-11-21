@@ -176,11 +176,11 @@ namespace DuplicateDetectorUWP.Detector
         }
 
         public void DetectOriginRecords(
-            ObservableCollection<GroupRecord> groupRecords, EnumerableDetectOrigin selectType)
+            ObservableCollection<GroupRecord> groupRecords, EnumerableDetectOrigin[] selectType)
         {
             foreach(var group in groupRecords)
             {
-                group.DetectOriginRecord(selectType);
+                group.DetectOriginRecord(selectType[0]);
             }
         }
 

@@ -11,8 +11,8 @@
     <AssemblyName>DuplicateDetectorUWP</AssemblyName>
     <DefaultLanguage>en-US</DefaultLanguage>
     <TargetPlatformIdentifier>UAP</TargetPlatformIdentifier>
-    <TargetPlatformVersion>10.0.14393.0</TargetPlatformVersion>
-    <TargetPlatformMinVersion>10.0.10586.0</TargetPlatformMinVersion>
+    <TargetPlatformVersion>10.0.10586.0</TargetPlatformVersion>
+    <TargetPlatformMinVersion>10.0.10240.0</TargetPlatformMinVersion>
     <MinimumVisualStudioVersion>14</MinimumVisualStudioVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{A5A43C5B-DE2A-4C0C-9213-0A381AF9435A};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
@@ -110,13 +110,13 @@
     <Compile Include="Detector\DuplicateDetector.cs" />
     <Compile Include="Detector\Enumerable\EnumCompareType.cs" />
     <Compile Include="Detector\Enumerable\EnumCryptograph.cs" />
-    <Compile Include="Detector\Enumerable\EnumSelectType.cs" />
+    <Compile Include="Detector\Enumerable\EnumerableDetectOrigin.cs" />
     <Compile Include="Detector\GroupRecord.cs" />
     <Compile Include="Detector\Record.cs" />
     <Compile Include="EnumErrorCode.cs" />
     <Compile Include="Hash\AbstractHash.cs" />
     <Compile Include="Hash\Md5.cs" />
-    <Compile Include="Hash\SHA1.cs" />
+    <Compile Include="Hash\Sha1.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Singleton.cs" />
     <EmbeddedResource Include="Properties\DuplicateDetectorUWP.rd.xml" />

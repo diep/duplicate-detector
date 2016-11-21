@@ -18,7 +18,6 @@ E:\GitHub\DuplicateDetector\DuplicateDetectorUWP\obj\Debug\MultipleQualifiersPer
 E:\GitHub\duplicate-detector\DuplicateDetectorUWP\bin\Debug\DuplicateDetectorUWP.dll
 E:\GitHub\duplicate-detector\DuplicateDetectorUWP\bin\Debug\DuplicateDetectorUWP.pdb
 E:\GitHub\duplicate-detector\DuplicateDetectorUWP\bin\Debug\DuplicateDetectorUWP.pri
-E:\GitHub\duplicate-detector\DuplicateDetectorUWP\obj\Debug\DuplicateDetectorUWP.csprojResolveAssemblyReference.cache
 E:\GitHub\duplicate-detector\DuplicateDetectorUWP\obj\Debug\DuplicateDetectorUWP.dll
 E:\GitHub\duplicate-detector\DuplicateDetectorUWP\obj\Debug\DuplicateDetectorUWP.pdb
 E:\GitHub\duplicate-detector\DuplicateDetectorUWP\obj\Debug\priconfig.xml
