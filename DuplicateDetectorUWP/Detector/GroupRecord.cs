@@ -60,22 +60,52 @@ namespace DuplicateDetectorUWP.Detector
             switch (detectorOrigin[0])
             {
                 case EnumerableDetectOrigin.LargestFile:
-                    records.OrderByDescending(item => item.Size).ElementAt(0).IsOrigin = true;
+                    records.OrderByDescending(item => 
+                    {
+                        item.IsOrigin = false;
+                        return item.Size;
+
+                    }).ElementAt(0).IsOrigin = true;
                     break;
                 case EnumerableDetectOrigin.SmallestFile:
-                    records.OrderBy(item => item.Size).ElementAt(0).IsOrigin = true;
+                    records.OrderBy(item =>
+                    {
+                        item.IsOrigin = false;
+                        return item.Size;
+
+                    }).ElementAt(0).IsOrigin = true;
                     break;
                 case EnumerableDetectOrigin.LongestFile:
-                    records.OrderByDescending(item => item.Name).ElementAt(0).IsOrigin = true;
+                    records.OrderByDescending(item =>
+                    {
+                        item.IsOrigin = false;
+                        return item.Name.Length;
+
+                    }).ElementAt(0).IsOrigin = true;
                     break;
                 case EnumerableDetectOrigin.ShortestFile:
-                    records.OrderBy(item => item.Name).ElementAt(0).IsOrigin = true;
+                    records.OrderBy(item =>
+                    {
+                        item.IsOrigin = false;
+                        return item.Name.Length;
+
+                    }).ElementAt(0).IsOrigin = true;
                     break;
                 case EnumerableDetectOrigin.OldestFile:
-                    records.OrderByDescending(item => item.DateCreated).ElementAt(0).IsOrigin = true;
+                    records.OrderByDescending(item =>
+                    {
+                        item.IsOrigin = false;
+                        return item.DateCreated;
+
+                    }).ElementAt(0).IsOrigin = true;
                     break;
                 case EnumerableDetectOrigin.NewestFile:
-                    records.OrderBy(item => item.DateCreated).ElementAt(0).IsOrigin = true;
+                    records.OrderBy(item =>
+                    {
+                        item.IsOrigin = false;
+                        return item.DateCreated;
+
+                    }).ElementAt(0).IsOrigin = true;
                     break;
             }
         }
