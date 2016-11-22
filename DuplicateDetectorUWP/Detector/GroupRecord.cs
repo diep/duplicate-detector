@@ -55,9 +55,9 @@ namespace DuplicateDetectorUWP.Detector
             this.records.Clear();
         }
         
-        internal void DetectOriginRecord(EnumerableDetectOrigin selectType)
+        internal void DetectOriginRecord(EnumerableDetectOrigin[] detectorOrigin)
         {
-            switch (selectType)
+            switch (detectorOrigin[0])
             {
                 case EnumerableDetectOrigin.LargestFile:
                     records.OrderByDescending(item => item.Size).ElementAt(0).IsOrigin = true;
@@ -71,10 +71,10 @@ namespace DuplicateDetectorUWP.Detector
                 case EnumerableDetectOrigin.ShortestFile:
                     records.OrderBy(item => item.Name).ElementAt(0).IsOrigin = true;
                     break;
-                case EnumerableDetectOrigin.NewestFile:
+                case EnumerableDetectOrigin.OldestFile:
                     records.OrderByDescending(item => item.DateCreated).ElementAt(0).IsOrigin = true;
                     break;
-                case EnumerableDetectOrigin.OldestFile:
+                case EnumerableDetectOrigin.NewestFile:
                     records.OrderBy(item => item.DateCreated).ElementAt(0).IsOrigin = true;
                     break;
             }

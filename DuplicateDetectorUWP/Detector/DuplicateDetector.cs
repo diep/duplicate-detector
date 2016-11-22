@@ -21,6 +21,7 @@ namespace DuplicateDetectorUWP.Detector
         public EnumerableCryptographType CryptographyType { get; set; }
         public EnumerableCompareType CompareBy { get; set; }
         public int TotalFiles { get; set; }
+        public string FileTypeFilter { get; set; }
 
         public DuplicateDetector()
         {
@@ -28,6 +29,7 @@ namespace DuplicateDetectorUWP.Detector
             this.CryptographyType = EnumerableCryptographType.Md5;
             this.CompareBy = EnumerableCompareType.Content;
             this.TotalFiles = 0;
+            this.FileTypeFilter = "*";
         }
 
         public async Task<ObservableCollection<GroupRecord>> Execute()
@@ -55,7 +57,7 @@ namespace DuplicateDetectorUWP.Detector
                         Path = file.Path
                     };
                     records.Add(record);
-                    OnCompletedOneFile();
+                    OnCompletedOneFile(record);
                 }
             }
             catch(Exception ex)
@@ -126,7 +128,11 @@ namespace DuplicateDetectorUWP.Detector
                 {
                     if (item.GetType() == typeof(StorageFile))
                     {
-                        files.Add((StorageFile)item);
+                        if(((StorageFile)item).FileType == FileTypeFilter
+                            || FileTypeFilter.Equals("*"))
+                        {
+                            files.Add((StorageFile)item);
+                        }
                     }
                     else
                     {
@@ -176,11 +182,12 @@ namespace DuplicateDetectorUWP.Detector
         }
 
         public void DetectOriginRecords(
-            ObservableCollection<GroupRecord> groupRecords, EnumerableDetectOrigin[] selectType)
+            ObservableCollection<GroupRecord> groupRecords, 
+            EnumerableDetectOrigin[] detectorOrigin)
         {
             foreach(var group in groupRecords)
             {
-                group.DetectOriginRecord(selectType[0]);
+                group.DetectOriginRecord(detectorOrigin);
             }
         }
 
@@ -216,9 +223,9 @@ namespace DuplicateDetectorUWP.Detector
         }
 
         public event EventHandler CompletedOneFile;
-        private void OnCompletedOneFile()
+        private void OnCompletedOneFile(object obj)
         {
-            CompletedOneFile?.Invoke(this, EventArgs.Empty);
+            CompletedOneFile?.Invoke(obj, EventArgs.Empty);
         }
 
         public event EventHandler Starting;
