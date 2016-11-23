@@ -8,10 +8,12 @@ A C# lib help you detect duplicate files
     d.folderPaths.Add(folderPath);
     d.CompareBy = EnumerableCompareType.Content; // default Content
     d.CryptographyType = EnumerableCryptographType.Md5; //default Md5
+    d.FileTypeFilter = ".txt" //use "*" for all file type
+
 
 2> Execute:
 	
-	ObservableCollection<GroupRecord> Group = await d.Execute();
+	ObservableCollection<GroupRecord> Group = await Task.Run(() => d.Execute());
 
 3> Event Handler:
 	Ex:
@@ -20,23 +22,36 @@ A C# lib help you detect duplicate files
 	{ 
 		// Get total file
 		int numOfFile = d.TotalFiles;
+
+		await this.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+                {
+                    // Your UI update code goes here
+                });
 	};
 
 	d.CompletedOneFile += (s, e) =>
     {
-    	// Update ProgressBar 
+		await this.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+                {
+                    // Your UI update code goes here
+                });
     };
 
     d.Completed += async (s, e) =>
     {
-        await new MessageDialog("Completed!").ShowAsync();    
+		await this.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+                {
+                    // Your UI update code goes here
+        			await new MessageDialog("Completed!").ShowAsync(); 
+                });   
     };
 
 
-4> Detect Origin Record:
+4> Detect Origin Records:
 
 	private void btnDetectOrigin_Click(object sender, RoutedEventArgs e)
     {
+    	//use IsOrigin property of Record after detected.
         d.DetectOriginRecords(Group, 
             new EnumerableDetectOrigin[] { EnumerableDetectOrigin.NewestFile });
     }

@@ -44,8 +44,9 @@ namespace DuplicateDetectorUWP.Detector
                 foreach (var file in files)
                 {
                     var basicProperties = await file.GetBasicPropertiesAsync();
-                    var hashCode = await Task.Run(() => GetHashCode(file));
-                    
+                    //var hashCode = await Task.Run(() => GetHashCode(file));
+                    var hashCode = await GetHashCode(file);
+
                     Record record = new Record()
                     {
                         Id = Singleton.CreateGuid(),
@@ -60,12 +61,12 @@ namespace DuplicateDetectorUWP.Detector
                     OnCompletedOneFile(record);
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 throw new Exception(ex.Message);
             }
 
-            var groupRecord = GroupBy(records, CompareBy) ;
+            var groupRecord = GroupBy(records, CompareBy);
             OnComplete();
             return groupRecord;
         }

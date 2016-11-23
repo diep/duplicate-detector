@@ -57,55 +57,99 @@ namespace DuplicateDetectorUWP.Detector
         
         internal void DetectOriginRecord(EnumerableDetectOrigin[] detectorOrigin)
         {
+            List<Record> gr = null;
+
             switch (detectorOrigin[0])
             {
                 case EnumerableDetectOrigin.LargestFile:
-                    records.OrderByDescending(item => 
+                    gr = records.OrderByDescending(item =>
                     {
                         item.IsOrigin = false;
                         return item.Size;
 
-                    }).ElementAt(0).IsOrigin = true;
+                    }).ToList<Record>();
+                    foreach (var item in gr)
+                    {
+                        if (item.Size == gr.ElementAt(0).Size)
+                        {
+                            item.IsOrigin = true;
+                        }
+                    }
                     break;
                 case EnumerableDetectOrigin.SmallestFile:
-                    records.OrderBy(item =>
+                    gr = records.OrderBy(item =>
                     {
                         item.IsOrigin = false;
                         return item.Size;
 
-                    }).ElementAt(0).IsOrigin = true;
+                    }).ToList<Record>();
+                    foreach (var item in gr)
+                    {
+                        if (item.Size == gr.ElementAt(0).Size)
+                        {
+                            item.IsOrigin = true;
+                        }
+                    }
                     break;
                 case EnumerableDetectOrigin.LongestFile:
-                    records.OrderByDescending(item =>
+                    gr = records.OrderByDescending(item =>
                     {
                         item.IsOrigin = false;
                         return item.Name.Length;
 
-                    }).ElementAt(0).IsOrigin = true;
+                    }).ToList<Record>();
+                    foreach (var item in gr)
+                    {
+                        if (item.Name.Length == gr.ElementAt(0).Name.Length)
+                        {
+                            item.IsOrigin = true;
+                        }
+                    }
                     break;
                 case EnumerableDetectOrigin.ShortestFile:
-                    records.OrderBy(item =>
+                    gr = records.OrderBy(item =>
                     {
                         item.IsOrigin = false;
                         return item.Name.Length;
 
-                    }).ElementAt(0).IsOrigin = true;
+                    }).ToList<Record>();
+                    foreach (var item in gr)
+                    {
+                        if (item.Name.Length == gr.ElementAt(0).Name.Length)
+                        {
+                            item.IsOrigin = true;
+                        }
+                    }
                     break;
                 case EnumerableDetectOrigin.OldestFile:
-                    records.OrderByDescending(item =>
+                    gr = records.OrderByDescending(item =>
                     {
                         item.IsOrigin = false;
                         return item.DateCreated;
 
-                    }).ElementAt(0).IsOrigin = true;
+                    }).ToList<Record>();
+                    foreach (var item in gr)
+                    {
+                        if (item.DateCreated == gr.ElementAt(0).DateCreated)
+                        {
+                            item.IsOrigin = true;
+                        }
+                    }
                     break;
                 case EnumerableDetectOrigin.NewestFile:
-                    records.OrderBy(item =>
+                    gr = records.OrderBy(item =>
                     {
                         item.IsOrigin = false;
                         return item.DateCreated;
 
-                    }).ElementAt(0).IsOrigin = true;
+                    }).ToList<Record>();
+                    foreach (var item in gr)
+                    {
+                        if (item.DateCreated == gr.ElementAt(0).DateCreated)
+                        {
+                            item.IsOrigin = true;
+                        }
+                    }
                     break;
             }
         }
