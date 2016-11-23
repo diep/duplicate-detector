@@ -21,7 +21,7 @@ namespace DuplicateDetectorUWP.Detector
         public EnumerableCryptographType CryptographyType { get; set; }
         public EnumerableCompareType CompareBy { get; set; }
         public int TotalFiles { get; set; }
-        public string FileTypeFilter { get; set; }
+        public string[] FileTypeFilter { get; set; }
 
         public DuplicateDetector()
         {
@@ -29,7 +29,7 @@ namespace DuplicateDetectorUWP.Detector
             this.CryptographyType = EnumerableCryptographType.Md5;
             this.CompareBy = EnumerableCompareType.Content;
             this.TotalFiles = 0;
-            this.FileTypeFilter = "*";
+            this.FileTypeFilter = new string[] { "*" };
         }
 
         public async Task<ObservableCollection<GroupRecord>> Execute()
@@ -129,7 +129,7 @@ namespace DuplicateDetectorUWP.Detector
                 {
                     if (item.GetType() == typeof(StorageFile))
                     {
-                        if(((StorageFile)item).FileType == FileTypeFilter
+                        if(FileTypeFilter.Contains(((StorageFile)item).FileType)
                             || FileTypeFilter.Equals("*"))
                         {
                             files.Add((StorageFile)item);
