@@ -19,7 +19,7 @@ namespace DuplicateDetectorUWP.Detector
 
         public ObservableCollection<StorageFolder> folderPaths { get; set; }
         public EnumerableCryptographType CryptographyType { get; set; }
-        public EnumerableCompareType CompareBy { get; set; }
+        public EnumerableCompareType[] CompareBy { get; set; }
         public int TotalFiles { get; set; }
         public string[] FileTypeFilter { get; set; }
 
@@ -27,7 +27,7 @@ namespace DuplicateDetectorUWP.Detector
         {
             this.folderPaths = new ObservableCollection<StorageFolder>();
             this.CryptographyType = EnumerableCryptographType.Md5;
-            this.CompareBy = EnumerableCompareType.Content;
+            this.CompareBy = new EnumerableCompareType[] { EnumerableCompareType.Content };
             this.TotalFiles = 0;
             this.FileTypeFilter = new string[] { "*" };
         }
@@ -72,11 +72,13 @@ namespace DuplicateDetectorUWP.Detector
         }
 
         private ObservableCollection<GroupRecord> GroupBy(
-            List<Record> records, EnumerableCompareType compareOption)
+            List<Record> records, EnumerableCompareType[] compareOption)
         {
+            if (records == null) return null;
+            if (compareOption == null || compareOption.Count() == 0) throw new Exception();
             var groupRecords = new ObservableCollection<GroupRecord>();
             var query = new object();
-            switch (compareOption)
+            switch (compareOption[0])
             {
                 case EnumerableCompareType.Content:
                     query = records.GroupBy(item => item.Hash);
@@ -97,18 +99,29 @@ namespace DuplicateDetectorUWP.Detector
                     break;
             }
 
-            foreach(var group in (IEnumerable<IGrouping<string, Record>>)query)
+            var option = compareOption.ToList();
+            option.RemoveAt(0);
+            foreach (var group in (IEnumerable<IGrouping<string, Record>>)query)
             {
-                GroupRecord groupRecord = new GroupRecord()
+                var listGroup = group.ToList();
+                try
                 {
-                    records = new ObservableCollection<Record>(group.ToList()),
-                    Name = group.First().Name,
-                    Size = group.ToList().Sum(t => t.Size),
-                    TypeGroup = group.Key
-                };
-                if(groupRecord.records.Count > 1)
+                    groupRecords = new ObservableCollection<GroupRecord>(
+                        groupRecords.Concat(GroupBy(listGroup, option.ToArray())));
+                }
+                catch
                 {
-                    groupRecords.Add(groupRecord);
+                    GroupRecord groupRecord = new GroupRecord()
+                    {
+                        records = new ObservableCollection<Record>(listGroup),
+                        Name = group.First().Name,
+                        Size = listGroup.Sum(t => t.Size),
+                        TypeGroup = group.Key
+                    };
+                    if (groupRecord.records.Count > 1)
+                    {
+                        groupRecords.Add(groupRecord);
+                    }
                 }
             }
             return groupRecords;
@@ -130,7 +143,7 @@ namespace DuplicateDetectorUWP.Detector
                     if (item.GetType() == typeof(StorageFile))
                     {
                         if(FileTypeFilter.Contains(((StorageFile)item).FileType)
-                            || FileTypeFilter.Equals("*"))
+                            || FileTypeFilter.Contains("*"))
                         {
                             files.Add((StorageFile)item);
                         }

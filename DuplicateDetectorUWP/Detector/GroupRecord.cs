@@ -57,11 +57,13 @@ namespace DuplicateDetectorUWP.Detector
         
         internal void DetectOriginRecord(EnumerableDetectOrigin[] detectorOrigin)
         {
+            if (detectorOrigin == null)
+                throw new Exception("Param can't null");
             List<Record> gr = null;
 
             switch (detectorOrigin[0])
             {
-                case EnumerableDetectOrigin.LargestFile:
+                case EnumerableDetectOrigin.LargestSize:
                     gr = records.OrderByDescending(item =>
                     {
                         item.IsOrigin = false;
@@ -76,7 +78,7 @@ namespace DuplicateDetectorUWP.Detector
                         }
                     }
                     break;
-                case EnumerableDetectOrigin.SmallestFile:
+                case EnumerableDetectOrigin.SmallestSize:
                     gr = records.OrderBy(item =>
                     {
                         item.IsOrigin = false;
@@ -91,7 +93,7 @@ namespace DuplicateDetectorUWP.Detector
                         }
                     }
                     break;
-                case EnumerableDetectOrigin.LongestFile:
+                case EnumerableDetectOrigin.LongestName:
                     gr = records.OrderByDescending(item =>
                     {
                         item.IsOrigin = false;
@@ -106,7 +108,7 @@ namespace DuplicateDetectorUWP.Detector
                         }
                     }
                     break;
-                case EnumerableDetectOrigin.ShortestFile:
+                case EnumerableDetectOrigin.ShortestName:
                     gr = records.OrderBy(item =>
                     {
                         item.IsOrigin = false;
@@ -151,6 +153,120 @@ namespace DuplicateDetectorUWP.Detector
                         }
                     }
                     break;
+            }
+        }
+
+        //Priority: OldestFile/NewestFile -> LongestName/ShortestName -> SmallestSize/LargestSize
+        internal void DetectOriginRecord_1(EnumerableDetectOrigin[] detectorOrigin)
+        {
+            if (detectorOrigin == null)
+                throw new Exception("Param can't null");
+            if((detectorOrigin.Contains(EnumerableDetectOrigin.NewestFile) && detectorOrigin.Contains(EnumerableDetectOrigin.OldestFile))
+                || (detectorOrigin.Contains(EnumerableDetectOrigin.LargestSize) && detectorOrigin.Contains(EnumerableDetectOrigin.SmallestSize))
+                || (detectorOrigin.Contains(EnumerableDetectOrigin.LongestName) && detectorOrigin.Contains(EnumerableDetectOrigin.ShortestName)))
+            {
+                throw new Exception("Can't choose both NewestFile and OldestFile or both LargestSize and SmallestSize or both LongestName and ShortestName of EnumerableDetectOrigin");
+            }
+
+            List<Record> gr = null;
+            
+            if(detectorOrigin.Contains(EnumerableDetectOrigin.NewestFile))
+            {
+                gr = records.OrderBy(item =>
+                {
+                    item.IsOrigin = false;
+                    return item.DateCreated;
+
+                }).ToList<Record>();
+                foreach (var item in gr)
+                {
+                    if (item.DateCreated == gr.ElementAt(0).DateCreated)
+                    {
+                        item.IsOrigin = true;
+                    }
+                }
+            }
+            else if (detectorOrigin.Contains(EnumerableDetectOrigin.OldestFile))
+            {
+                gr = records.OrderByDescending(item =>
+                {
+                    item.IsOrigin = false;
+                    return item.DateCreated;
+
+                }).ToList<Record>();
+                foreach (var item in gr)
+                {
+                    if (item.DateCreated == gr.ElementAt(0).DateCreated)
+                    {
+                        item.IsOrigin = true;
+                    }
+                }
+            }
+
+            if (detectorOrigin.Contains(EnumerableDetectOrigin.LongestName))
+            {
+                gr = records.OrderByDescending(item =>
+                {
+                    item.IsOrigin = false;
+                    return item.Name.Length;
+
+                }).ToList<Record>();
+                foreach (var item in gr)
+                {
+                    if (item.Name.Length == gr.ElementAt(0).Name.Length)
+                    {
+                        item.IsOrigin = true;
+                    }
+                }
+            }
+            else if (detectorOrigin.Contains(EnumerableDetectOrigin.ShortestName))
+            {
+                gr = records.OrderBy(item =>
+                {
+                    item.IsOrigin = false;
+                    return item.Name.Length;
+
+                }).ToList<Record>();
+                foreach (var item in gr)
+                {
+                    if (item.Name.Length == gr.ElementAt(0).Name.Length)
+                    {
+                        item.IsOrigin = true;
+                    }
+                }
+            }
+
+            if (detectorOrigin.Contains(EnumerableDetectOrigin.LargestSize))
+            {
+                gr = records.OrderByDescending(item =>
+                {
+                    item.IsOrigin = false;
+                    return item.Size;
+
+                }).ToList<Record>();
+                foreach (var item in gr)
+                {
+                    if (item.Size == gr.ElementAt(0).Size)
+                    {
+                        item.IsOrigin = true;
+                    }
+                }
+            }
+            else if(detectorOrigin.Contains(EnumerableDetectOrigin.SmallestSize))
+            {
+                gr = records.OrderBy(item =>
+                {
+                    item.IsOrigin = false;
+                    return item.Size;
+
+                }).ToList<Record>();
+                foreach (var item in gr)
+                {
+                    if (item.Size == gr.ElementAt(0).Size)
+                    {
+                        item.IsOrigin = true;
+                    }
+                }
             }
         }
     }

@@ -9,9 +9,9 @@ namespace DuplicateDetectorUWP.Detector.Enumerable
     {
         OldestFile,
         NewestFile,
-        SmallestFile,
-        LargestFile,
-        LongestFile,
-        ShortestFile
+        SmallestSize,
+        LargestSize,
+        LongestName,
+        ShortestName
     }
 }
