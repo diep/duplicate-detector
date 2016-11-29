@@ -55,7 +55,8 @@ namespace DuplicateDetectorUWP.Detector
                         DateCreated = file.DateCreated.LocalDateTime,
                         DateModified = basicProperties.DateModified.LocalDateTime,
                         Hash = hashCode,
-                        Path = file.Path
+                        Path = file.Path,
+                        FileType = file.FileType
                     };
                     records.Add(record);
                     OnCompletedOneFile(record);
@@ -89,7 +90,7 @@ namespace DuplicateDetectorUWP.Detector
                 case EnumerableCompareType.DateModified:
                     query = records.GroupBy(item => item.DateModified.ToString());
                     break;
-                case EnumerableCompareType.Name:
+                case EnumerableCompareType.Name:    
                     query = records.GroupBy(item => item.Name);
                     break;
                 case EnumerableCompareType.Size:
@@ -111,16 +112,22 @@ namespace DuplicateDetectorUWP.Detector
                 }
                 catch
                 {
-                    GroupRecord groupRecord = new GroupRecord()
+                    var iGroup = listGroup.GroupBy(item => item.FileType);
+                    foreach (var gr in iGroup)
                     {
-                        records = new ObservableCollection<Record>(listGroup),
-                        Name = group.First().Name,
-                        Size = listGroup.Sum(t => t.Size),
-                        TypeGroup = group.Key
-                    };
-                    if (groupRecord.records.Count > 1)
-                    {
-                        groupRecords.Add(groupRecord);
+                        var listRecord = gr.ToList();
+
+                        GroupRecord groupRecord = new GroupRecord()
+                        {
+                            records = new ObservableCollection<Record>(listRecord),
+                            Name = group.First().Name,
+                            Size = listRecord.Sum(t => t.Size),
+                            TypeGroup = group.Key
+                        };
+                        if (groupRecord.records.Count > 1)
+                        {
+                            groupRecords.Add(groupRecord);
+                        }
                     }
                 }
             }

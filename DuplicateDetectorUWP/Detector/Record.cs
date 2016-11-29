@@ -18,6 +18,7 @@ namespace DuplicateDetectorUWP.Detector
             this._dateCreated = new DateTime();
             this._dateModified = new DateTime();
             this._isOrigin = false;
+            this._fileType = string.Empty;
         }
 
         public Record(
@@ -37,6 +38,7 @@ namespace DuplicateDetectorUWP.Detector
             this._dateCreated = dateCreated;
             this._dateModified = dateModified;
             this._isOrigin = false;
+            this._fileType = string.Empty;
         }
 
         private string _id;
@@ -55,6 +57,7 @@ namespace DuplicateDetectorUWP.Detector
 
         private Boolean _isOrigin;
 
+        private string _fileType;
 
         public string Id
         {
@@ -184,6 +187,21 @@ namespace DuplicateDetectorUWP.Detector
             }
         }
 
+        public string FileType
+        {
+            get
+            {
+                return _fileType;
+            }
+            set
+            {
+                if(value != this._fileType)
+                {
+                    this._fileType = value;
+                    NotifyPropertyChanged("_extension");
+                }
+            }
+        }
 
         public event PropertyChangedEventHandler PropertyChanged;
         private void NotifyPropertyChanged(String propertyName)

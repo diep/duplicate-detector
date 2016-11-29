@@ -54,110 +54,9 @@ namespace DuplicateDetectorUWP.Detector
             }
             this.records.Clear();
         }
-        
+
+        //Priority: OldestFile/NewestFile -> SmallestSize/LargestSize -> LongestName/ShortestName 
         internal void DetectOriginRecord(EnumerableDetectOrigin[] detectorOrigin)
-        {
-            if (detectorOrigin == null)
-                throw new Exception("Param can't null");
-            List<Record> gr = null;
-
-            switch (detectorOrigin[0])
-            {
-                case EnumerableDetectOrigin.LargestSize:
-                    gr = records.OrderByDescending(item =>
-                    {
-                        item.IsOrigin = false;
-                        return item.Size;
-
-                    }).ToList<Record>();
-                    foreach (var item in gr)
-                    {
-                        if (item.Size == gr.ElementAt(0).Size)
-                        {
-                            item.IsOrigin = true;
-                        }
-                    }
-                    break;
-                case EnumerableDetectOrigin.SmallestSize:
-                    gr = records.OrderBy(item =>
-                    {
-                        item.IsOrigin = false;
-                        return item.Size;
-
-                    }).ToList<Record>();
-                    foreach (var item in gr)
-                    {
-                        if (item.Size == gr.ElementAt(0).Size)
-                        {
-                            item.IsOrigin = true;
-                        }
-                    }
-                    break;
-                case EnumerableDetectOrigin.LongestName:
-                    gr = records.OrderByDescending(item =>
-                    {
-                        item.IsOrigin = false;
-                        return item.Name.Length;
-
-                    }).ToList<Record>();
-                    foreach (var item in gr)
-                    {
-                        if (item.Name.Length == gr.ElementAt(0).Name.Length)
-                        {
-                            item.IsOrigin = true;
-                        }
-                    }
-                    break;
-                case EnumerableDetectOrigin.ShortestName:
-                    gr = records.OrderBy(item =>
-                    {
-                        item.IsOrigin = false;
-                        return item.Name.Length;
-
-                    }).ToList<Record>();
-                    foreach (var item in gr)
-                    {
-                        if (item.Name.Length == gr.ElementAt(0).Name.Length)
-                        {
-                            item.IsOrigin = true;
-                        }
-                    }
-                    break;
-                case EnumerableDetectOrigin.OldestFile:
-                    gr = records.OrderByDescending(item =>
-                    {
-                        item.IsOrigin = false;
-                        return item.DateCreated;
-
-                    }).ToList<Record>();
-                    foreach (var item in gr)
-                    {
-                        if (item.DateCreated == gr.ElementAt(0).DateCreated)
-                        {
-                            item.IsOrigin = true;
-                        }
-                    }
-                    break;
-                case EnumerableDetectOrigin.NewestFile:
-                    gr = records.OrderBy(item =>
-                    {
-                        item.IsOrigin = false;
-                        return item.DateCreated;
-
-                    }).ToList<Record>();
-                    foreach (var item in gr)
-                    {
-                        if (item.DateCreated == gr.ElementAt(0).DateCreated)
-                        {
-                            item.IsOrigin = true;
-                        }
-                    }
-                    break;
-            }
-        }
-
-        //Priority: OldestFile/NewestFile -> LongestName/ShortestName -> SmallestSize/LargestSize
-        internal void DetectOriginRecord_1(EnumerableDetectOrigin[] detectorOrigin)
         {
             if (detectorOrigin == null)
                 throw new Exception("Param can't null");
@@ -167,105 +66,73 @@ namespace DuplicateDetectorUWP.Detector
             {
                 throw new Exception("Can't choose both NewestFile and OldestFile or both LargestSize and SmallestSize or both LongestName and ShortestName of EnumerableDetectOrigin");
             }
-
-            List<Record> gr = null;
             
-            if(detectorOrigin.Contains(EnumerableDetectOrigin.NewestFile))
-            {
-                gr = records.OrderBy(item =>
-                {
-                    item.IsOrigin = false;
-                    return item.DateCreated;
+            List<Record> gr = records.ToList<Record>();
 
-                }).ToList<Record>();
-                foreach (var item in gr)
-                {
-                    if (item.DateCreated == gr.ElementAt(0).DateCreated)
-                    {
-                        item.IsOrigin = true;
-                    }
-                }
-            }
-            else if (detectorOrigin.Contains(EnumerableDetectOrigin.OldestFile))
-            {
-                gr = records.OrderByDescending(item =>
-                {
-                    item.IsOrigin = false;
-                    return item.DateCreated;
-
-                }).ToList<Record>();
-                foreach (var item in gr)
-                {
-                    if (item.DateCreated == gr.ElementAt(0).DateCreated)
-                    {
-                        item.IsOrigin = true;
-                    }
-                }
-            }
-
+            //
             if (detectorOrigin.Contains(EnumerableDetectOrigin.LongestName))
             {
-                gr = records.OrderByDescending(item =>
+                gr = gr.OrderByDescending(item =>
                 {
                     item.IsOrigin = false;
                     return item.Name.Length;
-
                 }).ToList<Record>();
-                foreach (var item in gr)
-                {
-                    if (item.Name.Length == gr.ElementAt(0).Name.Length)
-                    {
-                        item.IsOrigin = true;
-                    }
-                }
             }
             else if (detectorOrigin.Contains(EnumerableDetectOrigin.ShortestName))
             {
-                gr = records.OrderBy(item =>
+                gr = gr.OrderBy(item =>
                 {
                     item.IsOrigin = false;
                     return item.Name.Length;
-
                 }).ToList<Record>();
-                foreach (var item in gr)
-                {
-                    if (item.Name.Length == gr.ElementAt(0).Name.Length)
-                    {
-                        item.IsOrigin = true;
-                    }
-                }
             }
 
+            //
             if (detectorOrigin.Contains(EnumerableDetectOrigin.LargestSize))
             {
-                gr = records.OrderByDescending(item =>
+                gr = gr.OrderByDescending(item =>
                 {
                     item.IsOrigin = false;
                     return item.Size;
-
                 }).ToList<Record>();
-                foreach (var item in gr)
-                {
-                    if (item.Size == gr.ElementAt(0).Size)
-                    {
-                        item.IsOrigin = true;
-                    }
-                }
             }
-            else if(detectorOrigin.Contains(EnumerableDetectOrigin.SmallestSize))
+            else if (detectorOrigin.Contains(EnumerableDetectOrigin.SmallestSize))
             {
-                gr = records.OrderBy(item =>
+                gr = gr.OrderBy(item =>
                 {
                     item.IsOrigin = false;
                     return item.Size;
-
                 }).ToList<Record>();
-                foreach (var item in gr)
+            }
+
+            //
+            if (detectorOrigin.Contains(EnumerableDetectOrigin.NewestFile))
+            {
+                gr = gr.OrderBy(item =>
                 {
-                    if (item.Size == gr.ElementAt(0).Size)
-                    {
-                        item.IsOrigin = true;
-                    }
+                    item.IsOrigin = false;
+                    return item.DateCreated;
+                }).ToList<Record>();
+            }
+            else if (detectorOrigin.Contains(EnumerableDetectOrigin.OldestFile))
+            {
+                gr = gr.OrderByDescending(item =>
+                {
+                    item.IsOrigin = false;
+                    return item.DateCreated;
+                }).ToList<Record>();
+            }
+
+            gr[0].IsOrigin = true;
+            for(int i = 1; i < gr.Count; i++)
+            {
+                if (gr[0].Equals(gr[i]))
+                {
+                    gr[i].IsOrigin = true;
+                }
+                else
+                {
+                    break;
                 }
             }
         }
