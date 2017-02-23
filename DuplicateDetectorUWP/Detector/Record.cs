@@ -8,6 +8,16 @@ namespace DuplicateDetectorUWP.Detector
 {
     public class Record : INotifyPropertyChanged
     {
+        private string _id;
+        private string _name;
+        private long _size;
+        private DateTime _dateModified;
+        private string _hash;
+        private string _path;
+        private DateTime _dateCreated;
+        private Boolean _isOrigin;
+        private string _fileType;
+
         public Record()
         {
             this._id = string.Empty;
@@ -21,14 +31,7 @@ namespace DuplicateDetectorUWP.Detector
             this._fileType = string.Empty;
         }
 
-        public Record(
-            string id,
-            string name, 
-            long size, 
-            DateTime dateModified, 
-            string hash, 
-            string path, 
-            DateTime dateCreated)
+        public Record( string id, string name, long size, DateTime dateModified, string hash, string path, DateTime dateCreated)
         {
             this._id = id;
             this._name = name;
@@ -41,24 +44,7 @@ namespace DuplicateDetectorUWP.Detector
             this._fileType = string.Empty;
         }
 
-        private string _id;
-
-        private string _name;
-
-        private long _size;
-
-        private DateTime _dateModified;
-
-        private string _hash;
-
-        private string _path;
-
-        private DateTime _dateCreated;
-
-        private Boolean _isOrigin;
-
-        private string _fileType;
-
+        
         public string Id
         {
             get
@@ -70,7 +56,7 @@ namespace DuplicateDetectorUWP.Detector
                 if (value != this._id)
                 {
                     this._id = value;
-                    NotifyPropertyChanged("_id");
+                    NotifyPropertyChanged("Id");
                 }
             }
         }
@@ -86,7 +72,7 @@ namespace DuplicateDetectorUWP.Detector
                 if (value != this._name)
                 {
                     this._name = value;
-                    NotifyPropertyChanged("_name");
+                    NotifyPropertyChanged("Name");
                 }
             }
         }
@@ -102,7 +88,7 @@ namespace DuplicateDetectorUWP.Detector
                 if (value != this._size)
                 {
                     this._size = value;
-                    NotifyPropertyChanged("_size");
+                    NotifyPropertyChanged("Size");
                 }
             }
         }
@@ -118,7 +104,7 @@ namespace DuplicateDetectorUWP.Detector
                 if (value != this._dateModified)
                 {
                     this._dateModified = value;
-                    NotifyPropertyChanged("_dateModified");
+                    NotifyPropertyChanged("DateModified");
                 }
             }
         }
@@ -134,7 +120,7 @@ namespace DuplicateDetectorUWP.Detector
                 if (value != this._hash)
                 {
                     this._hash = value;
-                    NotifyPropertyChanged("_hash");
+                    NotifyPropertyChanged("Hash");
                 }
             }
         }
@@ -150,7 +136,7 @@ namespace DuplicateDetectorUWP.Detector
                 if (value != this._path)
                 {
                     this._path = value;
-                    NotifyPropertyChanged("_path");
+                    NotifyPropertyChanged("Path");
                 }
             }
         }
@@ -166,7 +152,7 @@ namespace DuplicateDetectorUWP.Detector
                 if (value != this._dateCreated)
                 {
                     this._dateCreated = value;
-                    NotifyPropertyChanged("_dateCreated");
+                    NotifyPropertyChanged("DateCreated");
                 }
             }
         }
@@ -182,7 +168,7 @@ namespace DuplicateDetectorUWP.Detector
                 if (value != this._isOrigin)
                 {
                     this._isOrigin = value;
-                    NotifyPropertyChanged("_isOrigin");
+                    NotifyPropertyChanged("IsOrigin");
                 }
             }
         }
@@ -198,7 +184,7 @@ namespace DuplicateDetectorUWP.Detector
                 if(value != this._fileType)
                 {
                     this._fileType = value;
-                    NotifyPropertyChanged("_extension");
+                    NotifyPropertyChanged("FileType");
                 }
             }
         }

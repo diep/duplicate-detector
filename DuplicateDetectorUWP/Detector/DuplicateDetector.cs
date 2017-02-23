@@ -10,6 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.Core;
 using Windows.Storage;
+using Windows.Storage.AccessCache;
 using Windows.Storage.FileProperties;
 
 namespace DuplicateDetectorUWP.Detector
@@ -17,29 +18,42 @@ namespace DuplicateDetectorUWP.Detector
     public class DuplicateDetector
     {
 
-        public ObservableCollection<StorageFolder> folderPaths { get; set; }
+        public ObservableCollection<string> includeFolderPaths { get; set; }
+        public ObservableCollection<string> excludeFolderPaths { get; set; }
         public EnumerableCryptographType CryptographyType { get; set; }
         public EnumerableCompareType[] CompareBy { get; set; }
         public int TotalFiles { get; set; }
         public string[] FileTypeFilter { get; set; }
+        private bool isStop;
 
         public DuplicateDetector()
         {
-            this.folderPaths = new ObservableCollection<StorageFolder>();
+            this.includeFolderPaths = new ObservableCollection<string>();
+            this.excludeFolderPaths = new ObservableCollection<string>();
             this.CryptographyType = EnumerableCryptographType.Md5;
             this.CompareBy = new EnumerableCompareType[] { EnumerableCompareType.Content };
             this.TotalFiles = 0;
             this.FileTypeFilter = new string[] { "*" };
+            this.isStop = false;
         }
 
         public async Task<ObservableCollection<GroupRecord>> Execute()
         {
             OnPreparing();
             var records = new List<Record>(); // records of files
-            var files = await GetAllFiles(folderPaths);
-            this.TotalFiles = files.Count;
+            var files = new ObservableCollection<StorageFile>();
             try
             {
+                 files = await GetAllFiles(includeFolderPaths);
+            }
+            catch (Exception ex)
+            {
+                isStop = false;
+                return null;
+            }
+            this.TotalFiles = files.Count;
+            //try
+            //{
                 OnStarting();
                 foreach (var file in files)
                 {
@@ -60,16 +74,28 @@ namespace DuplicateDetectorUWP.Detector
                     };
                     records.Add(record);
                     OnCompletedOneFile(record);
+                    if (isStop)
+                    {
+                        break;
+                    }
                 }
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
+            //}
+            //catch (Exception ex)
+            //{
+            //    
+            //}
+            if (!isStop)
+                OnComplete();
+            else
+                isStop = false;
 
             var groupRecord = GroupBy(records, CompareBy);
-            OnComplete();
             return groupRecord;
+        }
+
+        public void Stop()
+        {
+            isStop = true;
         }
 
         private ObservableCollection<GroupRecord> GroupBy(
@@ -135,15 +161,19 @@ namespace DuplicateDetectorUWP.Detector
         }
         
         private async Task<ObservableCollection<StorageFile>> GetAllFiles(
-            ObservableCollection<StorageFolder> folderPaths)
+            ObservableCollection<string> includeFolderPaths)
         {
             ObservableCollection<StorageFile> files = new ObservableCollection<StorageFile>();
-            foreach (var f in folderPaths)
+            foreach (var path in includeFolderPaths)
             {
-                Windows.Storage.AccessCache.StorageApplicationPermissions.
-                    FutureAccessList.AddOrReplace("PickedFolderToken", f);
+                if (excludeFolderPaths.Contains(path))
+                {
+                    continue;
+                }
+                var folder = await StorageFolder.GetFolderFromPathAsync(path);
+                //StorageApplicationPermissions.FutureAccessList.AddOrReplace("PickedFolderToken", folder);
 
-                var items = await f.GetItemsAsync();
+                var items = await folder.GetItemsAsync();
                 
                 foreach (var item in items)
                 {
@@ -157,12 +187,12 @@ namespace DuplicateDetectorUWP.Detector
                     }
                     else
                     {
-                        var x = await GetAllFiles(
-                            new ObservableCollection<StorageFolder>()
-                            {
-                                (StorageFolder)item }
-                            );
+                        var x = await GetAllFiles( new ObservableCollection<string>() { item.Path } );
                         files = new ObservableCollection<StorageFile>(files.Concat<StorageFile>(x));
+                    }
+                    if (isStop)
+                    {
+                        throw new Exception("Stop");
                     }
                 }
             }
@@ -212,11 +242,11 @@ namespace DuplicateDetectorUWP.Detector
             }
         }
 
-        public void AddFolders(StorageFolder path)
+        public void AddFolders(string path)
         {
             try
             {
-                this.folderPaths.Add(path);
+                this.includeFolderPaths.Add(path);
             }
             catch (Exception ex)
             {
@@ -228,7 +258,7 @@ namespace DuplicateDetectorUWP.Detector
         {
             try
             {
-                this.folderPaths.RemoveAt(index);
+                this.includeFolderPaths.RemoveAt(index);
             }
             catch (Exception ex)
             {
