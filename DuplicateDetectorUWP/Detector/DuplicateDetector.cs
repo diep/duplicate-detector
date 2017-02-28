@@ -4,11 +4,14 @@ using DuplicateDirectorUWP;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.Core;
+using Windows.Foundation;
 using Windows.Storage;
 using Windows.Storage.AccessCache;
 using Windows.Storage.FileProperties;
@@ -24,6 +27,7 @@ namespace DuplicateDetectorUWP.Detector
         public EnumerableCompareType[] CompareBy { get; set; }
         public int TotalFiles { get; set; }
         public string[] FileTypeFilter { get; set; }
+
         private bool isStop;
 
         public DuplicateDetector()
@@ -37,61 +41,63 @@ namespace DuplicateDetectorUWP.Detector
             this.isStop = false;
         }
 
+        private ObservableCollection<StorageFile> files;
         public async Task<ObservableCollection<GroupRecord>> Execute()
         {
             OnPreparing();
             var records = new List<Record>(); // records of files
-            var files = new ObservableCollection<StorageFile>();
+            files = new ObservableCollection<StorageFile>();
+            IAsyncAction getFileTask = null;
             try
             {
-                 files = await GetAllFiles(includeFolderPaths);
+                getFileTask = Task.Run(() => GetAllFiles(includeFolderPaths)).AsAsyncAction();
+
             }
             catch (Exception ex)
             {
                 isStop = false;
                 return null;
             }
-            this.TotalFiles = files.Count;
-            //try
-            //{
-                OnStarting();
-                foreach (var file in files)
-                {
-                    var basicProperties = await file.GetBasicPropertiesAsync();
-                    //var hashCode = await Task.Run(() => GetHashCode(file));
-                    var hashCode = await GetHashCode(file);
+            while (files.Count == 0) { }
 
-                    Record record = new Record()
-                    {
-                        Id = Singleton.CreateGuid(),
-                        Name = file.Name,
-                        Size = (long)basicProperties.Size,
-                        DateCreated = file.DateCreated.LocalDateTime,
-                        DateModified = basicProperties.DateModified.LocalDateTime,
-                        Hash = hashCode,
-                        Path = file.Path,
-                        FileType = file.FileType
-                    };
-                    records.Add(record);
-                    OnCompletedOneFile(record);
-                    if (isStop)
-                    {
-                        break;
-                    }
+            OnStarting();
+            for (int i = 0; i < files.Count; i++)
+            {
+                this.TotalFiles = files.Count;
+                var file = files[i];
+                var basicProperties = await file.GetBasicPropertiesAsync();
+                //var hashCode = await Task.Run(() => GetHashCode(file));
+                var hashCode = await GetHashCode(file);
+
+                Record record = new Record()
+                {
+                    Id = Singleton.CreateGuid(),
+                    Name = file.Name,
+                    Size = (long)basicProperties.Size,
+                    DateCreated = file.DateCreated.LocalDateTime,
+                    DateModified = basicProperties.DateModified.LocalDateTime,
+                    Hash = hashCode,
+                    Path = file.Path,
+                    FileType = file.FileType
+                };
+                records.Add(record);
+                OnCompletedOneFile(record);
+                if (isStop)
+                {
+                    getFileTask.Cancel();
+                    break;
                 }
-            //}
-            //catch (Exception ex)
-            //{
-            //    
-            //}
-            if (!isStop)
-                OnComplete();
-            else
-                isStop = false;
+            }
+
+            if (isStop) isStop = false;
+
+            OnComplete();
 
             var groupRecord = GroupBy(records, CompareBy);
+
             return groupRecord;
         }
+
 
         public void Stop()
         {
@@ -116,7 +122,7 @@ namespace DuplicateDetectorUWP.Detector
                 case EnumerableCompareType.DateModified:
                     query = records.GroupBy(item => item.DateModified.ToString());
                     break;
-                case EnumerableCompareType.Name:    
+                case EnumerableCompareType.Name:
                     query = records.GroupBy(item => item.Name);
                     break;
                 case EnumerableCompareType.Size:
@@ -159,11 +165,11 @@ namespace DuplicateDetectorUWP.Detector
             }
             return groupRecords;
         }
-        
-        private async Task<ObservableCollection<StorageFile>> GetAllFiles(
+
+        private async Task GetAllFiles(
             ObservableCollection<string> includeFolderPaths)
         {
-            ObservableCollection<StorageFile> files = new ObservableCollection<StorageFile>();
+            //ObservableCollection<StorageFile> files = new ObservableCollection<StorageFile>();
             foreach (var path in includeFolderPaths)
             {
                 if (excludeFolderPaths.Contains(path))
@@ -174,12 +180,12 @@ namespace DuplicateDetectorUWP.Detector
                 //StorageApplicationPermissions.FutureAccessList.AddOrReplace("PickedFolderToken", folder);
 
                 var items = await folder.GetItemsAsync();
-                
+
                 foreach (var item in items)
                 {
                     if (item.GetType() == typeof(StorageFile))
                     {
-                        if(FileTypeFilter.Contains(((StorageFile)item).FileType)
+                        if (FileTypeFilter.Contains(((StorageFile)item).FileType)
                             || FileTypeFilter.Contains("*"))
                         {
                             files.Add((StorageFile)item);
@@ -187,16 +193,18 @@ namespace DuplicateDetectorUWP.Detector
                     }
                     else
                     {
-                        var x = await GetAllFiles( new ObservableCollection<string>() { item.Path } );
-                        files = new ObservableCollection<StorageFile>(files.Concat<StorageFile>(x));
+                        //Task.Run(() => GetAllFiles(new ObservableCollection<string>() { item.Path })).AsAsyncAction();
+                        await GetAllFiles(new ObservableCollection<string>() { item.Path });
+                        //files = new ObservableCollection<StorageFile>(files.Concat<StorageFile>(x));
                     }
                     if (isStop)
                     {
                         throw new Exception("Stop");
+                        //Debug.WriteLine("Stop");
                     }
                 }
             }
-            return files;
+            //return files;
         }
 
         private async Task<string> GetHashCode(StorageFile file)
@@ -233,10 +241,10 @@ namespace DuplicateDetectorUWP.Detector
         }
 
         public void DetectOriginRecords(
-            ObservableCollection<GroupRecord> groupRecords, 
+            ObservableCollection<GroupRecord> groupRecords,
             EnumerableDetectOrigin[] detectorOrigin)
         {
-            foreach(var group in groupRecords)
+            foreach (var group in groupRecords)
             {
                 group.DetectOriginRecord(detectorOrigin);
             }
@@ -253,7 +261,7 @@ namespace DuplicateDetectorUWP.Detector
                 throw new Exception(ex.Message);
             }
         }
-        
+
         public void RemoveFolder(int index)
         {
             try
@@ -265,7 +273,7 @@ namespace DuplicateDetectorUWP.Detector
                 throw new Exception(ex.Message);
             }
         }
-        
+
 
         public event EventHandler Completed;
         public void OnComplete()
