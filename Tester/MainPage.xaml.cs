@@ -79,7 +79,7 @@ namespace Tester
 
             //Copy TestcacseDuplicate folder into LocalSetting and RunTest().
             //The Result file is result final of this testcase.
-            //RunTest();
+            RunTest();
         }
 
 
