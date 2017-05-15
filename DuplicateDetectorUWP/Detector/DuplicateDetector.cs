@@ -10,8 +10,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Windows.Storage;
 using Windows.System.Threading;
-using Windows.UI.Core;
-using Windows.UI.Xaml;
 
 namespace DuplicateDetectorUWP.Detector
 {
@@ -28,7 +26,7 @@ namespace DuplicateDetectorUWP.Detector
         public bool IsCountFileCompleted { get; set; }
 
         private bool containerAllFile = false;
-        private ObservableCollection<string> files;
+        private IEnumerable<string> files;
         private ThreadPoolTimer _periodicTimer1 = null;
         private List<Task> _countFileTasks;
 
@@ -42,6 +40,8 @@ namespace DuplicateDetectorUWP.Detector
             this.FileTypeFilter = new string[] { "*" };
             this.IsStop = false;
             this.IsCountFileCompleted = false;
+
+
         }
 
         public async Task<ObservableCollection<GroupRecord>> Execute()
@@ -53,28 +53,29 @@ namespace DuplicateDetectorUWP.Detector
             files = new ObservableCollection<string>();
             //IAsyncAction getFileTask = null;
             _countFileTasks = new List<Task>();
-            
+
             _periodicTimer1 = ThreadPoolTimer.CreatePeriodicTimer(
-                    new TimerElapsedHandler(OnTimerElapedHandeler1), TimeSpan.FromSeconds(5));
+                    new TimerElapsedHandler(OnTimerElapedHandeler1), TimeSpan.FromSeconds(2));
 
             foreach (var _ in includeFolderPaths)
             {
-                _countFileTasks.Add(Task.Run(() => { GetAllFiles(_); }));
+                _countFileTasks.Add(Task.Run(() => { CountAllFiles(_); }));
+                //_countFileTasks.Add(Task.Run(() => { GetAllFiles(_); }));
             }
-            Task.Delay(2000).Wait();
-            
+            await Task.Delay(2000);
+
             OnStarting();
-            for (int i = 0; i < files.Count; i++)
+            for (int i = 0; i < TotalFiles; i++)
             {
                 try
                 {
-                    this.TotalFiles = files.Count;
-                    var filePath = files[i];
+                    //TotalFiles = files.Count;
+                    var filePath = files.ElementAt(i);
                     if (String.IsNullOrEmpty(filePath)) continue;
                     //var file = await StorageFile.GetFileFromPathAsync(filePath);
                     //var basicProperties = await file.GetBasicPropertiesAsync();
                     var basicProperties = new FileInfo(filePath);
-                    
+
 
                     var hashCode = string.Empty;
                     if (CompareBy.Contains(EnumerableCompareType.Content))
@@ -98,14 +99,13 @@ namespace DuplicateDetectorUWP.Detector
                     OnCompletedOneFile(record);
 
                     //Clean trash by system
-                    GC.Collect();
+                    //GC.Collect();
                     //GC.WaitForPendingFinalizers();
-                    
+
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine("--- Exception in Execute() function: \r\n" + ex.ToString());
-                    //GoogleAnalytics.EasyTracker.GetTracker().SendException(ex.ToString(), false);
+                    OnOccurException(ex);
                 }
 
                 if (IsStop)
@@ -127,7 +127,6 @@ namespace DuplicateDetectorUWP.Detector
 
             return groupRecord;
         }
-        
 
         private ObservableCollection<GroupRecord> GroupBy(
             List<Record> records, EnumerableCompareType[] compareOption)
@@ -163,9 +162,9 @@ namespace DuplicateDetectorUWP.Detector
             catch (Exception ex)
             {
 
-                GoogleAnalytics.EasyTracker.GetTracker().SendException(ex.ToString(), false);
+                //GoogleAnalytics.EasyTracker.GetTracker().SendException(ex.ToString(), false);
             }
-            
+
             var option = compareOption.ToList();
             option.RemoveAt(0);
             foreach (var group in (IEnumerable<IGrouping<string, Record>>)query)
@@ -215,6 +214,30 @@ namespace DuplicateDetectorUWP.Detector
                     _countFileTasks.RemoveAt(i);
                 }
             }
+            GC.Collect();
+        }
+
+        private void CountAllFiles(string dirPath)
+        {
+            if (excludeFolderPaths.Contains(dirPath) || IsStop)
+            {
+                return;
+            }
+            try
+            {
+                var enumFiles = Directory.EnumerateFiles(dirPath, "*", SearchOption.TopDirectoryOnly);
+                TotalFiles += enumFiles.Count();
+                files = files.Concat(enumFiles);
+                var directorys = Directory.EnumerateDirectories(dirPath, "*", SearchOption.TopDirectoryOnly);
+                foreach (var dir in directorys)
+                {
+                    CountAllFiles(dir);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("--- Exception at CountAllFiles() - DuplicateDetector.cs: \n" + ex.ToString());
+            }
         }
 
         //int countTask = 0;
@@ -229,17 +252,17 @@ namespace DuplicateDetectorUWP.Detector
             {
                 DirectoryInfo dir = new DirectoryInfo(path);
                 var fileSystemInfos = dir.GetFileSystemInfos();
-                foreach(var _ in fileSystemInfos)
+                foreach (var _ in fileSystemInfos)
                 {
                     if (IsStop) return;
-                   
+
                     var extFile = _.Extension;
 
                     if (_.Attributes.ToString().Contains("Directory"))
                     {
                         // directory
                         //Debug.WriteLine(_countFileTasks.Count);
-                        _countFileTasks.Add(Task.Run(() => { GetAllFiles(_.FullName); }));
+                        //_countFileTasks.Add(Task.Run(() => { GetAllFiles(_.FullName); }));
 
                     }
                     else if (containerAllFile || FileTypeFilter.Contains(extFile))
@@ -247,7 +270,7 @@ namespace DuplicateDetectorUWP.Detector
                         // file
                         try
                         {
-                            files.Add(_.FullName); // BUG HERE
+                            //files.Add(_.FullName); // BUG HERE
                             //Debug.WriteLine(files.Count + ": " + _.FullName);
                         }
                         catch (Exception ex)
@@ -261,7 +284,7 @@ namespace DuplicateDetectorUWP.Detector
             {
                 Debug.WriteLine("--- Exception at GetAllFiles() - DuplicateDetector.cs: \n" + ex.ToString());
             }
-            
+
 
 
             //StorageFolder folder = null;
@@ -311,35 +334,35 @@ namespace DuplicateDetectorUWP.Detector
         private async Task<string> GetHashCodeAsync(StorageFile file)
         {
             string result = string.Empty;
-                using (Stream stream = await file.OpenStreamForReadAsync())
+            using (Stream stream = await file.OpenStreamForReadAsync())
+            {
+                byte[] buffer = new byte[1024 * 1024 * 10];
+
+                String hashBuffer = String.Empty;
+
+                AbstractHash hash = null;
+                switch (CryptographyType)
                 {
-                    byte[] buffer = new byte[1024 * 1024 * 10];
-
-                    String hashBuffer = String.Empty;
-
-                    AbstractHash hash = null;
-                    switch (CryptographyType)
-                    {
-                        case EnumerableCryptographType.Md5:
-                            hash = new Md5();
-                            break;
-                        case EnumerableCryptographType.Sha1:
-                            hash = new Sha1();
-                            break;
-                        default:
-                            break;
-                    }
-
-                    int read;
-                    while ((read = stream.Read(buffer, 0, buffer.Length)) > 0)
-                    {
-                        hashBuffer += hash.Create(buffer);
-                    }
-                    result = hash.Create(hashBuffer);
-                    stream.Dispose();
+                    case EnumerableCryptographType.Md5:
+                        hash = new Md5();
+                        break;
+                    case EnumerableCryptographType.Sha1:
+                        hash = new Sha1();
+                        break;
+                    default:
+                        break;
                 }
-                return result;
-            
+
+                int read;
+                while ((read = stream.Read(buffer, 0, buffer.Length)) > 0)
+                {
+                    hashBuffer += hash.Create(buffer);
+                }
+                result = hash.Create(hashBuffer);
+                stream.Dispose();
+            }
+            return result;
+
         }
 
         public void DetectOriginRecords(
@@ -361,7 +384,7 @@ namespace DuplicateDetectorUWP.Detector
             catch (Exception ex)
             {
                 throw new Exception(ex.Message);
-                GoogleAnalytics.EasyTracker.GetTracker().SendException(ex.ToString(), false);
+                //GoogleAnalytics.EasyTracker.GetTracker().SendException(ex.ToString(), false);
             }
         }
 
@@ -374,7 +397,7 @@ namespace DuplicateDetectorUWP.Detector
             catch (Exception ex)
             {
                 throw new Exception(ex.Message);
-                GoogleAnalytics.EasyTracker.GetTracker().SendException(ex.ToString(), false);
+                //GoogleAnalytics.EasyTracker.GetTracker().SendException(ex.ToString(), false);
             }
         }
 
@@ -401,6 +424,12 @@ namespace DuplicateDetectorUWP.Detector
         private void OnPreparing()
         {
             Preparing?.Invoke(this, EventArgs.Empty);
+        }
+
+        public event EventHandler OccurException;
+        private void OnOccurException(Exception ex)
+        {
+            OccurException?.Invoke(ex, EventArgs.Empty);
         }
     }
 }
