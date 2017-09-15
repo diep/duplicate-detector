@@ -7,6 +7,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Windows.Storage;
 using Windows.System.Threading;
@@ -26,9 +27,10 @@ namespace DuplicateDetectorUWP.Detector
         public bool IsCountFileCompleted { get; set; }
 
         private bool containerAllFile = false;
-        private IEnumerable<string> files;
+        private List<string> files;
         private ThreadPoolTimer _periodicTimer1 = null;
-        private List<Task> _countFileTasks;
+        private Object thisLock = new Object();
+        private string[] _searchPatterns;
 
         public DuplicateDetector()
         {
@@ -40,38 +42,68 @@ namespace DuplicateDetectorUWP.Detector
             this.FileTypeFilter = new string[] { "*" };
             this.IsStop = false;
             this.IsCountFileCompleted = false;
-
-
         }
 
-        public async Task<ObservableCollection<GroupRecord>> Execute()
+        public async Task<List<GroupRecord>> Execute()
         {
             IsCountFileCompleted = false;
             containerAllFile = FileTypeFilter.Contains("*");
+            GenerateSearchPattern();
             OnPreparing();
             var records = new List<Record>(); // records of files
-            files = new ObservableCollection<string>();
-            //IAsyncAction getFileTask = null;
-            _countFileTasks = new List<Task>();
+            files = new List<string>();
+
+            //var cancelTask = new CancellationTokenSource();
 
             _periodicTimer1 = ThreadPoolTimer.CreatePeriodicTimer(
                     new TimerElapsedHandler(OnTimerElapedHandeler1), TimeSpan.FromSeconds(2));
 
-            foreach (var _ in includeFolderPaths)
+            //Task CountFileTask = null;
+            //try
+            //{
+            var CountFileTask = Task.Factory.StartNew(() =>
             {
-                _countFileTasks.Add(Task.Run(() => { CountAllFiles(_); }));
-                //_countFileTasks.Add(Task.Run(() => { GetAllFiles(_); }));
-            }
-            await Task.Delay(2000);
+                includeFolderPaths.AsParallel().ForAll((path) =>
+                {
+                    CountAllFiles(path);
+                });
+                //foreach (var _ in includeFolderPaths)
+                //{
+                //    _countFileTasks.Add(Task.Run(() => { CountAllFiles(_); }));
+                //}
+            });//, cancelTask.Token);
+               //await Task.Delay(2000);
+
+            //}
+            //catch (Exception ex)
+            //{
+            //    cancelTask.Dispose();
+            //}
 
             OnStarting();
-            for (int i = 0; i < TotalFiles; i++)
+            int i = 0;
+            while (!(CountFileTask.IsCompleted && i == TotalFiles))
+            //for (int i = 0; i < TotalFiles; i++)
             {
+                if (CountFileTask.IsCompleted)
+                {
+                    IsCountFileCompleted = true;
+                }
+
+                if (i == TotalFiles || files.Count != TotalFiles)
+                {
+                    await Task.Delay(200);
+                    continue;
+                }
                 try
                 {
                     //TotalFiles = files.Count;
                     var filePath = files.ElementAt(i);
-                    if (String.IsNullOrEmpty(filePath)) continue;
+                    if (String.IsNullOrEmpty(filePath))
+                    {
+                        i++;
+                        continue;
+                    }
                     //var file = await StorageFile.GetFileFromPathAsync(filePath);
                     //var basicProperties = await file.GetBasicPropertiesAsync();
                     var basicProperties = new FileInfo(filePath);
@@ -86,7 +118,7 @@ namespace DuplicateDetectorUWP.Detector
 
                     Record record = new Record()
                     {
-                        Id = Singleton.CreateGuid(),
+                        //Id = Singleton.CreateGuid(),
                         Name = basicProperties.Name,
                         Size = basicProperties.Length,
                         DateCreated = basicProperties.CreationTimeUtc,
@@ -105,36 +137,45 @@ namespace DuplicateDetectorUWP.Detector
                 }
                 catch (Exception ex)
                 {
+                    i++;
                     OnOccurException(ex);
                 }
 
                 if (IsStop)
                 {
                     //getFileTask.Cancel();
+                    //cancelTask.Cancel();
                     break;
                 }
 
-                if (_countFileTasks.Count == 0)
-                    IsCountFileCompleted = true;
+                i++;
             }
 
             if (IsStop) IsStop = false;
-            _periodicTimer1.Cancel();
 
             OnComplete();
 
             var groupRecord = GroupBy(records, CompareBy);
 
+            _periodicTimer1.Cancel();
             return groupRecord;
         }
 
-        private ObservableCollection<GroupRecord> GroupBy(
-            List<Record> records, EnumerableCompareType[] compareOption)
+        private void GenerateSearchPattern()
+        {
+            _searchPatterns = new string[FileTypeFilter.Length];
+            for (int i = 0; i < FileTypeFilter.Length; i++)
+            {
+                _searchPatterns[i] = String.Format("*.{0}", FileTypeFilter[i].Trim(new char[] { '.' }));
+            }
+        }
+
+        private List<GroupRecord> GroupBy(List<Record> records, EnumerableCompareType[] compareOption)
         {
             if (records == null) return null;
             if (compareOption == null || compareOption.Count() == 0) throw new Exception();
-            var groupRecords = new ObservableCollection<GroupRecord>();
-            var query = new object();
+            var groupRecords = new List<GroupRecord>();
+            IEnumerable<IGrouping<string, Record>> query = null;
             try
             {
                 switch (compareOption[0])
@@ -157,28 +198,28 @@ namespace DuplicateDetectorUWP.Detector
                     default:
                         break;
                 }
-
             }
             catch (Exception ex)
             {
-
                 //GoogleAnalytics.EasyTracker.GetTracker().SendException(ex.ToString(), false);
             }
 
             var option = compareOption.ToList();
             option.RemoveAt(0);
-            foreach (var group in (IEnumerable<IGrouping<string, Record>>)query)
+
+            foreach(var group in query)
+            //query.ForAll((group) =>
             {
                 var listGroup = group.ToList();
                 try
                 {
-                    groupRecords = new ObservableCollection<GroupRecord>(
-                        groupRecords.Concat(GroupBy(listGroup, option.ToArray())));
+                    groupRecords.AddRange(GroupBy(listGroup, option.ToArray()));
                 }
                 catch
                 {
                     var iGroup = listGroup.GroupBy(item => item.FileType);
-                    foreach (var gr in iGroup)
+                    foreach(var gr in iGroup)
+                    //iGroup.ForAll(gr =>
                     {
                         var listRecord = gr.ToList();
 
@@ -194,7 +235,6 @@ namespace DuplicateDetectorUWP.Detector
                             groupRecords.Add(groupRecord);
                         }
                     }
-
                 }
                 //Clean trash by system
                 //GC.Collect();
@@ -205,15 +245,15 @@ namespace DuplicateDetectorUWP.Detector
 
         private void OnTimerElapedHandeler1(ThreadPoolTimer timer)
         {
-            for (int i = 0; i < _countFileTasks.Count; i++)
-            {
-                if (_countFileTasks[i].Status == TaskStatus.RanToCompletion ||
-                    _countFileTasks[i].Status == TaskStatus.Canceled ||
-                    _countFileTasks[i].Status == TaskStatus.Faulted)
-                {
-                    _countFileTasks.RemoveAt(i);
-                }
-            }
+            //for (int i = 0; i < _countFileTasks.Count; i++)
+            //{
+            //    if (_countFileTasks[i].Status == TaskStatus.RanToCompletion ||
+            //        _countFileTasks[i].Status == TaskStatus.Canceled ||
+            //        _countFileTasks[i].Status == TaskStatus.Faulted)
+            //    {
+            //        _countFileTasks.RemoveAt(i);
+            //    }
+            //}
             GC.Collect();
         }
 
@@ -225,20 +265,33 @@ namespace DuplicateDetectorUWP.Detector
             }
             try
             {
-                var enumFiles = Directory.EnumerateFiles(dirPath, "*", SearchOption.TopDirectoryOnly);
-                TotalFiles += enumFiles.Count();
-                files = files.Concat(enumFiles);
-                var directorys = Directory.EnumerateDirectories(dirPath, "*", SearchOption.TopDirectoryOnly);
-                foreach (var dir in directorys)
+                var enumFiles = GetFiles(dirPath, _searchPatterns);
+                lock (thisLock)
                 {
-                    CountAllFiles(dir);
+                    TotalFiles += enumFiles.Count();
+                    files.AddRange(enumFiles);
                 }
+                var directorys = Directory.EnumerateDirectories(dirPath, "*", SearchOption.TopDirectoryOnly);
+                directorys.ToList().ForEach(dir =>
+                   {
+                       CountAllFiles(dir);
+                   });
             }
             catch (Exception ex)
             {
                 Debug.WriteLine("--- Exception at CountAllFiles() - DuplicateDetector.cs: \n" + ex.ToString());
             }
         }
+
+        public IEnumerable<string> GetFiles(string path,
+                            string[] searchPatterns,
+                            SearchOption searchOption = SearchOption.TopDirectoryOnly)
+        {
+            return searchPatterns.AsParallel()
+                   .SelectMany(searchPattern =>
+                          Directory.EnumerateFiles(path, searchPattern, searchOption));
+        }
+
 
         //int countTask = 0;
         private void GetAllFiles(string path)
@@ -365,14 +418,12 @@ namespace DuplicateDetectorUWP.Detector
 
         }
 
-        public void DetectOriginRecords(
-            ObservableCollection<GroupRecord> groupRecords,
-            EnumerableDetectOrigin[] detectorOrigin)
+        public void DetectOriginRecords(ObservableCollection<GroupRecord> groupRecords, EnumerableDetectOrigin[] detectorOrigin)
         {
-            foreach (var group in groupRecords)
+            groupRecords.AsParallel().ForAll(group =>
             {
                 group.DetectOriginRecord(detectorOrigin);
-            }
+            });
         }
 
         public void AddFolders(string path)
